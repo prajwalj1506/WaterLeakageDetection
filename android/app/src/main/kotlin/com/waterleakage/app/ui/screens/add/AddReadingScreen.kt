@@ -51,22 +51,43 @@ fun AddReadingScreen(
         }
     }
 
+    val textFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedContainerColor = SurfaceWhite,
+        unfocusedContainerColor = SurfaceWhite,
+        focusedBorderColor = SkyBluePrimary,
+        unfocusedBorderColor = SurfaceBorder,
+        focusedLabelColor = SkyBluePrimary,
+        unfocusedLabelColor = TextSecondary,
+        cursorColor = SkyBluePrimary
+    )
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add Pipe Reading", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        text = "Add Pipe Reading",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = TextPrimary
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = BackgroundDark,
+                    containerColor = BackgroundWhite,
                     titleContentColor = TextPrimary
                 )
             )
         },
-        containerColor = BackgroundDark
+        containerColor = BackgroundOffWhite
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -78,9 +99,10 @@ fun AddReadingScreen(
         ) {
             // Intro hint
             Text(
-                text = "Enter sensor values below. The four ML models will evaluate pressure and refill status to detect potential pipeline leaks.",
+                text = "Enter sensor values below. The four pre-trained ML models will evaluate pressure and refill status to detect potential pipeline leaks.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = TextSecondary
+                color = TextSecondary,
+                fontSize = 13.sp
             )
 
             // Error Banner
@@ -106,31 +128,42 @@ fun AddReadingScreen(
                 }
             }
 
-            // Primary Sensor Features Card
+            // Primary Sensor Features Card (Used by ML)
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = SurfaceDark),
-                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                shape = RoundedCornerShape(14.dp),
                 border = BorderStroke(1.dp, SurfaceBorder)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    Text(
-                        text = "1. Sensor Input Features (Used by ML)",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = PrimaryCyan
-                    )
+                    Column {
+                        Text(
+                            text = "ML SENSOR FEATURES",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = SkyBluePrimary,
+                            letterSpacing = 0.5.sp
+                        )
+                        Text(
+                            text = "Scaled and evaluated by all 4 ML models",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextMuted,
+                            fontSize = 11.sp
+                        )
+                    }
 
                     OutlinedTextField(
                         value = state.pipeId,
                         onValueChange = { viewModel.onPipeIdChanged(it) },
-                        label = { Text("Pipe / Tank Identifier") },
+                        label = { Text("Pipe Identifier") },
                         placeholder = { Text("e.g. PIPE-104") },
-                        leadingIcon = { Icon(Icons.Default.Tag, contentDescription = null) },
+                        leadingIcon = { Icon(Icons.Default.Tag, contentDescription = null, tint = TextMuted) },
                         singleLine = true,
+                        shape = RoundedCornerShape(10.dp),
+                        colors = textFieldColors,
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -139,19 +172,22 @@ fun AddReadingScreen(
                         onValueChange = { viewModel.onPressureChanged(it) },
                         label = { Text("Water Pressure (bar)") },
                         placeholder = { Text("e.g. 52.3 (Normal: 45–65)") },
-                        leadingIcon = { Icon(Icons.Default.Speed, contentDescription = null) },
+                        leadingIcon = { Icon(Icons.Default.Speed, contentDescription = null, tint = TextMuted) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         singleLine = true,
                         supportingText = {
-                            Text("Normal pressure is 45-65. Values <45 or >65 frequently indicate leaks.")
+                            Text("Nominal normal range is 45.0 to 65.0 bar.", fontSize = 11.sp, color = TextMuted)
                         },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = textFieldColors,
                         modifier = Modifier.fillMaxWidth()
                     )
 
                     // Refill Switch Toggle
                     Surface(
-                        color = SurfaceVariantDark,
-                        shape = RoundedCornerShape(12.dp),
+                        color = BackgroundOffWhite,
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, SurfaceBorder),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
@@ -165,20 +201,24 @@ fun AddReadingScreen(
                                 Text(
                                     text = "Refill Status: ${if (state.refill == 1) "Active (1)" else "Inactive (0)"}",
                                     fontWeight = FontWeight.SemiBold,
+                                    fontSize = 13.sp,
                                     color = TextPrimary
                                 )
                                 Text(
-                                    text = if (state.refill == 1) "Tank is currently undergoing refill" else "Normal operation without active refill",
+                                    text = if (state.refill == 1) "Tank is currently undergoing active refill" else "Standard distribution mode without refill",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = TextSecondary
+                                    color = TextSecondary,
+                                    fontSize = 11.sp
                                 )
                             }
                             Switch(
                                 checked = state.refill == 1,
                                 onCheckedChange = { checked -> viewModel.onRefillChanged(if (checked) 1 else 0) },
                                 colors = SwitchDefaults.colors(
-                                    checkedThumbColor = PrimaryCyan,
-                                    checkedTrackColor = PrimaryCyanVariant
+                                    checkedThumbColor = Color.White,
+                                    checkedTrackColor = SkyBluePrimary,
+                                    uncheckedThumbColor = TextMuted,
+                                    uncheckedTrackColor = SurfaceBorder
                                 )
                             )
                         }
@@ -189,20 +229,29 @@ fun AddReadingScreen(
             // Location & Timestamp Metadata Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = SurfaceDark),
-                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                shape = RoundedCornerShape(14.dp),
                 border = BorderStroke(1.dp, SurfaceBorder)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    Text(
-                        text = "2. Metadata & Inspection Location",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = SecondaryIndigo
-                    )
+                    Column {
+                        Text(
+                            text = "METADATA & AUDIT LOG",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = TextSecondary,
+                            letterSpacing = 0.5.sp
+                        )
+                        Text(
+                            text = "Stored in database for historical tracking",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextMuted,
+                            fontSize = 11.sp
+                        )
+                    }
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -214,6 +263,8 @@ fun AddReadingScreen(
                             label = { Text("Latitude") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                             singleLine = true,
+                            shape = RoundedCornerShape(10.dp),
+                            colors = textFieldColors,
                             modifier = Modifier.weight(1f)
                         )
                         OutlinedTextField(
@@ -222,6 +273,8 @@ fun AddReadingScreen(
                             label = { Text("Longitude") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                             singleLine = true,
+                            shape = RoundedCornerShape(10.dp),
+                            colors = textFieldColors,
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -235,16 +288,22 @@ fun AddReadingScreen(
                                 )
                             )
                         },
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, SkyBluePrimary),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = SurfaceWhite,
+                            contentColor = SkyBluePrimary
+                        ),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         if (state.isFetchingLocation) {
-                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), color = SkyBluePrimary, strokeWidth = 2.dp)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Acquiring GPS fix...")
+                            Text("Acquiring GPS fix...", fontSize = 13.sp)
                         } else {
-                            Icon(Icons.Default.MyLocation, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.MyLocation, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Use Current GPS Coordinates")
+                            Text("Use Current GPS Location", fontSize = 13.sp, fontWeight = FontWeight.Medium)
                         }
                     }
 
@@ -255,10 +314,12 @@ fun AddReadingScreen(
                         label = { Text("Reading Timestamp (ISO 8601)") },
                         trailingIcon = {
                             IconButton(onClick = { viewModel.updateTimestampToNow() }) {
-                                Icon(Icons.Default.Update, contentDescription = "Set to Now")
+                                Icon(Icons.Default.Update, contentDescription = "Set to Now", tint = SkyBluePrimary)
                             }
                         },
                         singleLine = true,
+                        shape = RoundedCornerShape(10.dp),
+                        colors = textFieldColors,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -270,32 +331,32 @@ fun AddReadingScreen(
                 enabled = !state.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(54.dp),
-                shape = RoundedCornerShape(14.dp),
+                    .height(52.dp),
+                shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = PrimaryCyan,
-                    contentColor = Color(0xFF001F2A)
+                    containerColor = SkyBluePrimary,
+                    contentColor = Color.White
                 )
             ) {
                 if (state.isLoading) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = Color(0xFF001F2A),
-                        strokeWidth = 2.5.dp
+                        modifier = Modifier.size(20.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
                     )
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
                     Text(
                         text = "Running 4-Model ML Inference...",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.sp
                     )
                 } else {
-                    Icon(Icons.Default.Analytics, contentDescription = null)
+                    Icon(Icons.Default.Analytics, contentDescription = null, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "Run ML Leak Prediction",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.sp
                     )
                 }
             }

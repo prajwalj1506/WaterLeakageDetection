@@ -1,7 +1,6 @@
 package com.waterleakage.app.ui.screens.result
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,8 +15,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.waterleakage.app.data.model.ReadingResponse
-import com.waterleakage.app.ui.components.LeakBadge
 import com.waterleakage.app.ui.components.ProbabilityGauge
 import com.waterleakage.app.ui.theme.*
 
@@ -35,24 +32,39 @@ fun PredictionResultScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Prediction Results", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        text = "Prediction Result",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = TextPrimary
+                        )
                     }
                 },
                 actions = {
                     IconButton(onClick = { viewModel.loadReading() }) {
-                        Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh")
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Refresh",
+                            tint = TextSecondary
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = BackgroundDark,
+                    containerColor = BackgroundWhite,
                     titleContentColor = TextPrimary
                 )
             )
         },
-        containerColor = BackgroundDark
+        containerColor = BackgroundOffWhite
     ) { innerPadding ->
         if (state.isLoading) {
             Box(
@@ -61,7 +73,7 @@ fun PredictionResultScreen(
                     .padding(innerPadding),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = PrimaryCyan)
+                CircularProgressIndicator(color = SkyBluePrimary)
             }
         } else if (state.errorMessage != null) {
             Box(
@@ -78,7 +90,12 @@ fun PredictionResultScreen(
                     Icon(Icons.Default.ErrorOutline, contentDescription = null, tint = StatusLeakRed, modifier = Modifier.size(48.dp))
                     Text("Failed to load result", style = MaterialTheme.typography.titleMedium, color = StatusLeakRed)
                     Text(state.errorMessage!!, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                    Button(onClick = { viewModel.loadReading() }) { Text("Retry") }
+                    Button(
+                        onClick = { viewModel.loadReading() },
+                        colors = ButtonDefaults.buttonColors(containerColor = SkyBluePrimary)
+                    ) {
+                        Text("Retry")
+                    }
                 }
             }
         } else {
@@ -100,8 +117,8 @@ fun PredictionResultScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = heroBg),
-                    shape = RoundedCornerShape(20.dp),
-                    border = BorderStroke(2.dp, heroBorder)
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(1.dp, heroBorder)
                 ) {
                     Column(
                         modifier = Modifier
@@ -111,18 +128,18 @@ fun PredictionResultScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Icon(
-                            imageVector = if (isLeak) Icons.Default.Warning else Icons.Default.CheckCircle,
+                            imageVector = if (isLeak) Icons.Default.WarningAmber else Icons.Default.CheckCircle,
                             contentDescription = null,
                             tint = heroColor,
-                            modifier = Modifier.size(56.dp)
+                            modifier = Modifier.size(52.dp)
                         )
 
                         Text(
                             text = if (isLeak) "LEAK DETECTED" else "NO LEAK DETECTED",
-                            style = MaterialTheme.typography.headlineMedium,
+                            style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.ExtraBold,
                             color = heroColor,
-                            letterSpacing = 1.sp
+                            letterSpacing = 0.5.sp
                         )
 
                         Text(
@@ -132,7 +149,7 @@ fun PredictionResultScreen(
                             color = TextPrimary
                         )
 
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
 
                         // Large Probability Gauge
                         ProbabilityGauge(probability = r.averageProbability)
@@ -141,9 +158,9 @@ fun PredictionResultScreen(
 
                         Text(
                             text = if (isLeak)
-                                "Average probability is ≥ 50%. The models indicate an abnormal pressure fluctuation."
+                                "Average probability is ≥ 50%. The ensemble identifies an anomalous pressure condition."
                             else
-                                "Average probability is < 50%. System pressure is within expected nominal operating limits.",
+                                "Average probability is < 50%. Pipeline pressure is within expected nominal operating limits.",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary
                         )
@@ -153,8 +170,8 @@ fun PredictionResultScreen(
                 // Four Individual Models Breakdown Card
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = SurfaceDark),
-                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                    shape = RoundedCornerShape(14.dp),
                     border = BorderStroke(1.dp, SurfaceBorder)
                 ) {
                     Column(
@@ -167,26 +184,26 @@ fun PredictionResultScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "4-Model Individual Breakdown",
+                                text = "Model Breakdown",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = TextPrimary
                             )
                             Surface(
-                                color = SurfaceVariantDark,
+                                color = SkyBlueLight,
                                 shape = RoundedCornerShape(6.dp)
                             ) {
                                 Text(
                                     text = "Avg: ${String.format("%.1f%%", r.averageProbability * 100)}",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = heroColor,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    color = SkyBlueDark,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                                 )
                             }
                         }
 
-                        Divider(color = SurfaceBorder)
+                        HorizontalDivider(color = SurfaceBorder)
 
                         ModelRow(
                             modelName = "Logistic Regression",
@@ -214,8 +231,8 @@ fun PredictionResultScreen(
                 // Inspection Input Summary Card
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = SurfaceDark),
-                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                    shape = RoundedCornerShape(14.dp),
                     border = BorderStroke(1.dp, SurfaceBorder)
                 ) {
                     Column(
@@ -229,11 +246,13 @@ fun PredictionResultScreen(
                             color = TextPrimary
                         )
 
+                        HorizontalDivider(color = SurfaceBorder)
+
                         InfoRow("Pressure", "${r.pressure} bar")
                         InfoRow("Refill Status", if (r.refill == 1) "Active (1)" else "Inactive (0)")
                         InfoRow("Coordinates", "${r.latitude}, ${r.longitude}")
-                        InfoRow("Reading Timestamp", r.readingTimestamp)
-                        InfoRow("Saved to SQLite", "ID #${r.id} at ${r.createdAt.take(19)}")
+                        InfoRow("Reading Timestamp", r.readingTimestamp.take(19).replace('T', ' '))
+                        InfoRow("Database Row", "#${r.id}")
                     }
                 }
 
@@ -245,22 +264,30 @@ fun PredictionResultScreen(
                     OutlinedButton(
                         onClick = onNavigateToHistory,
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, SurfaceBorder),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = SurfaceWhite,
+                            contentColor = TextPrimary
+                        )
                     ) {
-                        Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("View History")
+                        Text("View History", fontSize = 13.sp, fontWeight = FontWeight.Medium)
                     }
 
                     Button(
                         onClick = onAddAnother,
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryCyan, contentColor = Color(0xFF001F2A))
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = SkyBluePrimary,
+                            contentColor = Color.White
+                        )
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Add Next")
+                        Text("Add Next", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                     }
                 }
 
@@ -277,6 +304,8 @@ fun ModelRow(
     pred: String
 ) {
     val isLeak = pred.equals("Leak", ignoreCase = true)
+    val badgeBg = if (isLeak) StatusLeakRedContainer else StatusNormalGreenContainer
+    val badgeBorder = if (isLeak) StatusLeakRedBorder else StatusNormalGreenBorder
     val badgeColor = if (isLeak) StatusLeakRed else StatusNormalGreen
 
     Row(
@@ -296,21 +325,23 @@ fun ModelRow(
             Text(
                 text = "Probability: ${String.format("%.1f%%", prob * 100)}",
                 style = MaterialTheme.typography.bodySmall,
-                color = TextSecondary
+                color = TextSecondary,
+                fontSize = 12.sp
             )
         }
 
         Surface(
-            color = if (isLeak) StatusLeakRedContainer else StatusNormalGreenContainer,
-            border = BorderStroke(1.dp, if (isLeak) StatusLeakRedBorder else StatusNormalGreenBorder),
+            color = badgeBg,
+            border = BorderStroke(1.dp, badgeBorder),
             shape = RoundedCornerShape(6.dp)
         ) {
             Text(
-                text = pred,
+                text = if (isLeak) "LEAK" else "NORMAL",
                 color = badgeColor,
                 fontWeight = FontWeight.Bold,
                 fontSize = 11.sp,
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                letterSpacing = 0.5.sp,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
             )
         }
     }
@@ -326,4 +357,3 @@ fun InfoRow(label: String, value: String) {
         Text(text = value, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium, color = TextPrimary)
     }
 }
-

@@ -15,12 +15,36 @@ class WaterLeakageRepository(private val context: Context) {
 
     private val api get() = ApiClient.getApi(context)
 
+    /**
+     * Checks backend health with automatic multi-endpoint fallback:
+     * If the current URL fails, it automatically probes candidate URLs (USB 127.0.0.1,
+     * Wi-Fi LAN, Emulator) and silently switches to the working one!
+     */
     suspend fun checkHealth(): ApiResult<HealthResponse> = withContext(Dispatchers.IO) {
         try {
             val response = api.checkHealth()
             ApiResult.Success(response)
-        } catch (e: Exception) {
-            ApiResult.Error(formatError(e), e)
+        } catch (firstError: Exception) {
+            // Auto-fallback: try candidate URLs
+            val detected = ApiClient.autoDetectWorkingServer(context)
+            if (detected != null) {
+                try {
+                    val response = api.checkHealth()
+                    return@withContext ApiResult.Success(response)
+                } catch (retryError: Exception) {
+                    return@withContext ApiResult.Error(formatError(retryError), retryError)
+                }
+            }
+            ApiResult.Error(formatError(firstError), firstError)
+        }
+    }
+
+    suspend fun autoDetectServer(): ApiResult<String> = withContext(Dispatchers.IO) {
+        val detected = ApiClient.autoDetectWorkingServer(context)
+        if (detected != null) {
+            ApiResult.Success(detected)
+        } else {
+            ApiResult.Error("Could not detect an active backend on USB (127.0.0.1), Wi-Fi, or Emulator.")
         }
     }
 
@@ -71,10 +95,10 @@ class WaterLeakageRepository(private val context: Context) {
     }
 
     private fun formatError(throwable: Throwable): String {
+        val currentUrl = ApiClient.getBaseUrl(context)
         return when (throwable) {
-            is IOException -> "Cannot connect to backend (${ApiClient.getBaseUrl(context)}). Please verify FastAPI server is running."
+            is IOException -> "Cannot reach backend ($currentUrl). Tap 'Auto-Connect' or check USB/Wi-Fi."
             else -> throwable.localizedMessage ?: "An unexpected error occurred."
         }
     }
 }
-

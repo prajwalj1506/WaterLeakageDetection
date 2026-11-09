@@ -1,38 +1,41 @@
 package com.waterleakage.app.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-private val DarkColorScheme = darkColorScheme(
-    primary = PrimaryCyan,
-    onPrimary = Color(0xFF001E2B),
-    primaryContainer = PrimaryCyanVariant,
-    onPrimaryContainer = Color(0xFFCBE6FF),
-    secondary = SecondaryIndigo,
-    onSecondary = Color(0xFF1E1B4B),
-    tertiary = AccentTeal,
-    background = BackgroundDark,
+private val MinimalLightColorScheme = lightColorScheme(
+    primary = SkyBluePrimary,
+    onPrimary = Color.White,
+    primaryContainer = SkyBlueLight,
+    onPrimaryContainer = SkyBlueDark,
+    secondary = SkyBlueAccent,
+    onSecondary = Color.White,
+    secondaryContainer = SkyBlueContainer,
+    onSecondaryContainer = SkyBlueDark,
+    tertiary = SkyBlueDark,
+    onTertiary = Color.White,
+    background = BackgroundWhite,
     onBackground = TextPrimary,
-    surface = SurfaceDark,
+    surface = SurfaceWhite,
     onSurface = TextPrimary,
-    surfaceVariant = SurfaceVariantDark,
+    surfaceVariant = SurfaceVariantLight,
     onSurfaceVariant = TextSecondary,
     outline = SurfaceBorder,
+    outlineVariant = SurfaceBorderSubtle,
     error = StatusLeakRed,
-    onError = Color.White
+    onError = Color.White,
+    errorContainer = StatusLeakRedContainer,
+    onErrorContainer = StatusLeakRed
 )
 
 @Composable
 fun WaterLeakageDetectionTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    // Defaulting to Dark industrial theme for high-tech aesthetic
     MaterialTheme(
-        colorScheme = DarkColorScheme,
+        colorScheme = MinimalLightColorScheme,
         typography = Typography,
         content = content
     )

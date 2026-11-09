@@ -2,30 +2,34 @@ package com.waterleakage.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Industrial Navy / Tech Theme Colors
-val BackgroundDark = Color(0xFF0B1120)
-val SurfaceDark = Color(0xFF1E293B)
-val SurfaceVariantDark = Color(0xFF334155)
-val SurfaceBorder = Color(0xFF475569)
+// Minimal Light Theme Colors (White Primary + Sky Blue Accent)
+val BackgroundWhite = Color(0xFFFFFFFF)
+val BackgroundOffWhite = Color(0xFFF8FAFC)
+val SurfaceWhite = Color(0xFFFFFFFF)
+val SurfaceVariantLight = Color(0xFFF1F5F9)
+val SurfaceBorder = Color(0xFFE2E8F0)
+val SurfaceBorderSubtle = Color(0xFFF1F5F9)
 
-val PrimaryCyan = Color(0xFF38BDF8)
-val PrimaryCyanVariant = Color(0xFF0284C7)
-val SecondaryIndigo = Color(0xFF818CF8)
-val AccentTeal = Color(0xFF2DD4BF)
+// Sky Blue Accent Palette
+val SkyBluePrimary = Color(0xFF0284C7)        // Tailwind Sky 600
+val SkyBlueAccent = Color(0xFF0EA5E9)         // Tailwind Sky 500
+val SkyBlueLight = Color(0xFFE0F2FE)          // Tailwind Sky 100
+val SkyBlueDark = Color(0xFF0369A1)           // Tailwind Sky 700
+val SkyBlueContainer = Color(0xFFF0F9FF)      // Tailwind Sky 50
 
-// High-visibility status colors for predictions
-val StatusLeakRed = Color(0xFFEF4444)
-val StatusLeakRedContainer = Color(0xFF450A0A)
-val StatusLeakRedBorder = Color(0xFFDC2626)
+// High-clarity Status Colors (Minimalist)
+val StatusNormalGreen = Color(0xFF059669)
+val StatusNormalGreenContainer = Color(0xFFECFDF5)
+val StatusNormalGreenBorder = Color(0xFFA7F3D0)
 
-val StatusNormalGreen = Color(0xFF10B981)
-val StatusNormalGreenContainer = Color(0xFF064E3B)
-val StatusNormalGreenBorder = Color(0xFF059669)
+val StatusLeakRed = Color(0xFFE11D48)
+val StatusLeakRedContainer = Color(0xFFFFF1F2)
+val StatusLeakRedBorder = Color(0xFFFECDD3)
 
-val StatusWarningYellow = Color(0xFFF59E0B)
-val StatusWarningContainer = Color(0xFF451A03)
+val StatusWarning = Color(0xFFD97706)
+val StatusWarningContainer = Color(0xFFFFFBEB)
 
-// Text colors
-val TextPrimary = Color(0xFFF8FAFC)
-val TextSecondary = Color(0xFF94A3B8)
-val TextMuted = Color(0xFF64748B)
+// Typography & Content Colors
+val TextPrimary = Color(0xFF0F172A)           // Tailwind Slate 900
+val TextSecondary = Color(0xFF475569)         // Tailwind Slate 600
+val TextMuted = Color(0xFF94A3B8)             // Tailwind Slate 400

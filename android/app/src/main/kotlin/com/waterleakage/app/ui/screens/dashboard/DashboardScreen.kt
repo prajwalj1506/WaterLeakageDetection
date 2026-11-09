@@ -48,30 +48,36 @@ fun DashboardScreen(
                     Column {
                         Text(
                             text = "Water Leakage Detection",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
                         )
                         Text(
-                            text = "4-Model ML Probability Ensemble",
+                            text = "4-Model Ensemble Pipeline",
                             style = MaterialTheme.typography.labelSmall,
-                            color = PrimaryCyan
+                            color = SkyBluePrimary,
+                            fontWeight = FontWeight.Medium
                         )
                     }
                 },
                 actions = {
                     IconButton(onClick = { viewModel.loadDashboard() }) {
-                        Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh")
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Refresh",
+                            tint = TextSecondary
+                        )
                     }
                     IconButton(onClick = { showServerDialog = true }) {
                         Icon(
                             imageVector = Icons.Default.Settings,
                             contentDescription = "Server Settings",
-                            tint = if (state.isServerOnline) StatusNormalGreen else StatusWarningYellow
+                            tint = if (state.isServerOnline) StatusNormalGreen else StatusWarning
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = BackgroundDark,
+                    containerColor = BackgroundWhite,
                     titleContentColor = TextPrimary
                 )
             )
@@ -81,11 +87,12 @@ fun DashboardScreen(
                 onClick = onNavigateToAdd,
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
                 text = { Text("New Reading", fontWeight = FontWeight.SemiBold) },
-                containerColor = PrimaryCyan,
-                contentColor = Color(0xFF001F2A)
+                containerColor = SkyBluePrimary,
+                contentColor = Color.White,
+                shape = RoundedCornerShape(14.dp)
             )
         },
-        containerColor = BackgroundDark
+        containerColor = BackgroundOffWhite
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
@@ -98,6 +105,10 @@ fun DashboardScreen(
             item {
                 ServerStatusBanner(
                     isOnline = state.isServerOnline,
+                    connectionType = state.connectionType,
+                    activeUrl = state.activeUrl,
+                    isAutoConnecting = state.isAutoConnecting,
+                    onAutoConnectClick = { viewModel.autoConnect() },
                     onConfigureClick = { showServerDialog = true }
                 )
             }
@@ -135,17 +146,17 @@ fun DashboardScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         MetricStatCard(
-                            title = "TOTAL READINGS",
+                            title = "Total Readings",
                             value = summary?.totalReadings?.toString() ?: "0",
-                            subtitle = "Logged pipe tests",
-                            color = PrimaryCyan,
+                            subtitle = "Logged tests",
+                            accentColor = SkyBluePrimary,
                             modifier = Modifier.weight(1f)
                         )
                         MetricStatCard(
-                            title = "LEAKS DETECTED",
+                            title = "Leaks Detected",
                             value = summary?.leaksDetected?.toString() ?: "0",
                             subtitle = if (summary != null) "${summary.leakRatePercentage}% leak rate" else "0%",
-                            color = StatusLeakRed,
+                            accentColor = StatusLeakRed,
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -155,29 +166,29 @@ fun DashboardScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         MetricStatCard(
-                            title = "NORMAL PIPES",
+                            title = "Normal Pipes",
                             value = summary?.normalReadings?.toString() ?: "0",
                             subtitle = "No leak condition",
-                            color = StatusNormalGreen,
+                            accentColor = StatusNormalGreen,
                             modifier = Modifier.weight(1f)
                         )
                         MetricStatCard(
-                            title = "ML MODELS",
+                            title = "ML Models",
                             value = "4 Models",
                             subtitle = "LR, DT, RF, SVM",
-                            color = SecondaryIndigo,
+                            accentColor = SkyBlueDark,
                             modifier = Modifier.weight(1f)
                         )
                     }
                 }
             }
 
-            // Quick Actions Card
+            // Reading History Quick Action Card
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = SurfaceDark),
-                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                    shape = RoundedCornerShape(12.dp),
                     border = BorderStroke(1.dp, SurfaceBorder)
                 ) {
                     Row(
@@ -187,13 +198,14 @@ fun DashboardScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = "Reading History",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = TextPrimary
                             )
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = "Browse and filter all stored pipe analyses",
                                 style = MaterialTheme.typography.bodySmall,
@@ -202,12 +214,14 @@ fun DashboardScreen(
                         }
                         FilledTonalButton(
                             onClick = onNavigateToHistory,
+                            shape = RoundedCornerShape(8.dp),
                             colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = SurfaceVariantDark,
-                                contentColor = PrimaryCyan
-                            )
+                                containerColor = SkyBlueLight,
+                                contentColor = SkyBlueDark
+                            ),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                         ) {
-                            Text("View All")
+                            Text("View All", fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
                             Spacer(modifier = Modifier.width(4.dp))
                             Icon(Icons.Default.ChevronRight, contentDescription = null, modifier = Modifier.size(16.dp))
                         }
@@ -229,7 +243,7 @@ fun DashboardScreen(
                         color = TextPrimary
                     )
                     TextButton(onClick = onNavigateToHistory) {
-                        Text("See More", color = PrimaryCyan)
+                        Text("See More", color = SkyBluePrimary, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
@@ -240,8 +254,8 @@ fun DashboardScreen(
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = SurfaceDark),
-                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                        shape = RoundedCornerShape(12.dp),
                         border = BorderStroke(1.dp, SurfaceBorder)
                     ) {
                         Column(
@@ -254,18 +268,18 @@ fun DashboardScreen(
                                 imageVector = Icons.Default.WaterDamage,
                                 contentDescription = null,
                                 tint = TextMuted,
-                                modifier = Modifier.size(48.dp)
+                                modifier = Modifier.size(40.dp)
                             )
-                            Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
                             Text(
                                 text = "No readings logged yet",
-                                style = MaterialTheme.typography.bodyLarge,
+                                style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                color = TextSecondary
+                                color = TextPrimary
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Tap '+ New Reading' below to enter pipe sensor values.",
+                                text = "Tap 'New Reading' below to enter pipe sensor values.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = TextMuted
                             )
@@ -291,10 +305,14 @@ fun DashboardScreen(
 @Composable
 fun ServerStatusBanner(
     isOnline: Boolean,
+    connectionType: String,
+    activeUrl: String,
+    isAutoConnecting: Boolean,
+    onAutoConnectClick: () -> Unit,
     onConfigureClick: () -> Unit
 ) {
     Surface(
-        color = SurfaceDark,
+        color = SurfaceWhite,
         shape = RoundedCornerShape(12.dp),
         border = BorderStroke(1.dp, SurfaceBorder),
         modifier = Modifier.fillMaxWidth()
@@ -307,26 +325,59 @@ fun ServerStatusBanner(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(
+                modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Surface(
                     shape = CircleShape,
                     color = if (isOnline) StatusNormalGreen else StatusLeakRed,
                     modifier = Modifier.size(10.dp)
                 ) {}
-                Text(
-                    text = if (isOnline) "Backend Online (FastAPI + SQLite)" else "Backend Offline",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium,
-                    color = if (isOnline) StatusNormalGreen else StatusLeakRed
-                )
+                Column {
+                    Text(
+                        text = if (isOnline) "Backend Online ($connectionType)" else "Backend Offline",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isOnline) StatusNormalGreen else StatusLeakRed
+                    )
+                    Text(
+                        text = activeUrl,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextMuted,
+                        maxLines = 1
+                    )
+                }
             }
-            TextButton(
-                onClick = onConfigureClick,
-                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
-            ) {
-                Text("Change IP", fontSize = 12.sp, color = PrimaryCyan)
+
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                if (!isOnline) {
+                    FilledTonalButton(
+                        onClick = onAutoConnectClick,
+                        enabled = !isAutoConnecting,
+                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = SkyBlueLight,
+                            contentColor = SkyBlueDark
+                        )
+                    ) {
+                        if (isAutoConnecting) {
+                            CircularProgressIndicator(modifier = Modifier.size(12.dp), strokeWidth = 1.5.dp, color = SkyBlueDark)
+                            Spacer(modifier = Modifier.width(4.dp))
+                        } else {
+                            Icon(Icons.Default.Bolt, contentDescription = null, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                        }
+                        Text("Auto-Connect", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+                TextButton(
+                    onClick = onConfigureClick,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                ) {
+                    Text("Change", fontSize = 12.sp, color = SkyBluePrimary, fontWeight = FontWeight.Medium)
+                }
             }
         }
     }
@@ -341,8 +392,8 @@ fun RecentReadingItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = SurfaceDark),
-        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+        shape = RoundedCornerShape(12.dp),
         border = BorderStroke(1.dp, SurfaceBorder)
     ) {
         Row(
@@ -360,12 +411,12 @@ fun RecentReadingItem(
                     color = TextPrimary
                 )
                 Text(
-                    text = "Pressure: ${reading.pressure} bar • Refill: ${if (reading.refill == 1) "Active" else "Off"}",
+                    text = "Pressure: ${reading.pressure} bar  |  Refill: ${if (reading.refill == 1) "Active" else "Off"}",
                     style = MaterialTheme.typography.bodySmall,
                     color = TextSecondary
                 )
                 Text(
-                    text = "Avg Prob: ${String.format("%.1f%%", reading.averageProbability * 100)}",
+                    text = "Probability: ${String.format("%.1f%%", reading.averageProbability * 100)}",
                     style = MaterialTheme.typography.labelSmall,
                     color = if (reading.averageProbability >= 0.5) StatusLeakRed else StatusNormalGreen,
                     fontWeight = FontWeight.SemiBold
@@ -376,4 +427,3 @@ fun RecentReadingItem(
         }
     }
 }
-

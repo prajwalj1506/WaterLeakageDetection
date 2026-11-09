@@ -40,21 +40,42 @@ fun ReadingDetailScreen(
     if (showDeleteConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmDialog = false },
-            title = { Text("Delete Reading") },
-            text = { Text("Are you sure you want to permanently delete this reading from the database?") },
+            containerColor = SurfaceWhite,
+            shape = RoundedCornerShape(16.dp),
+            title = {
+                Text(
+                    text = "Delete Reading",
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to permanently delete this reading record from the SQLite database?",
+                    color = TextSecondary,
+                    fontSize = 13.sp
+                )
+            },
             confirmButton = {
                 Button(
                     onClick = {
                         showDeleteConfirmDialog = false
                         viewModel.deleteReading()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = StatusLeakRed)
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = StatusLeakRed,
+                        contentColor = Color.White
+                    )
                 ) {
-                    Text("Delete")
+                    Text("Delete", fontWeight = FontWeight.SemiBold)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteConfirmDialog = false }) {
+                TextButton(
+                    onClick = { showDeleteConfirmDialog = false },
+                    colors = ButtonDefaults.textButtonColors(contentColor = TextSecondary)
+                ) {
                     Text("Cancel")
                 }
             }
@@ -64,10 +85,21 @@ fun ReadingDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Reading Details", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        text = "Reading Details",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = TextPrimary
+                        )
                     }
                 },
                 actions = {
@@ -83,12 +115,12 @@ fun ReadingDetailScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = BackgroundDark,
+                    containerColor = BackgroundWhite,
                     titleContentColor = TextPrimary
                 )
             )
         },
-        containerColor = BackgroundDark
+        containerColor = BackgroundOffWhite
     ) { innerPadding ->
         if (state.isLoading) {
             Box(
@@ -97,7 +129,7 @@ fun ReadingDetailScreen(
                     .padding(innerPadding),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = PrimaryCyan)
+                CircularProgressIndicator(color = SkyBluePrimary)
             }
         } else if (state.errorMessage != null) {
             Box(
@@ -113,7 +145,12 @@ fun ReadingDetailScreen(
                 ) {
                     Icon(Icons.Default.ErrorOutline, contentDescription = null, tint = StatusLeakRed, modifier = Modifier.size(48.dp))
                     Text(state.errorMessage!!, style = MaterialTheme.typography.bodyMedium, color = StatusLeakRed)
-                    Button(onClick = { viewModel.loadDetails() }) { Text("Retry") }
+                    Button(
+                        onClick = { viewModel.loadDetails() },
+                        colors = ButtonDefaults.buttonColors(containerColor = SkyBluePrimary)
+                    ) {
+                        Text("Retry")
+                    }
                 }
             }
         } else {
@@ -121,7 +158,6 @@ fun ReadingDetailScreen(
             val isLeak = r.finalPrediction.equals("Leak", ignoreCase = true)
             val heroBg = if (isLeak) StatusLeakRedContainer else StatusNormalGreenContainer
             val heroBorder = if (isLeak) StatusLeakRedBorder else StatusNormalGreenBorder
-            val heroColor = if (isLeak) StatusLeakRed else StatusNormalGreen
 
             Column(
                 modifier = Modifier
@@ -136,13 +172,13 @@ fun ReadingDetailScreen(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = heroBg),
                     shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.5.dp, heroBorder)
+                    border = BorderStroke(1.dp, heroBorder)
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(18.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -151,7 +187,7 @@ fun ReadingDetailScreen(
                         ) {
                             Text(
                                 text = r.pipeId,
-                                style = MaterialTheme.typography.headlineSmall,
+                                style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
                                 color = TextPrimary
                             )
@@ -165,8 +201,8 @@ fun ReadingDetailScreen(
                 // Four Model Predictions & Probabilities
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = SurfaceDark),
-                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                    shape = RoundedCornerShape(14.dp),
                     border = BorderStroke(1.dp, SurfaceBorder)
                 ) {
                     Column(
@@ -177,10 +213,10 @@ fun ReadingDetailScreen(
                             text = "Model Evaluation Matrix",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = PrimaryCyan
+                            color = TextPrimary
                         )
 
-                        Divider(color = SurfaceBorder)
+                        HorizontalDivider(color = SurfaceBorder)
 
                         ModelRow("Logistic Regression", r.probLogisticRegression, r.predLogisticRegression)
                         ModelRow("Decision Tree", r.probDecisionTree, r.predDecisionTree)
@@ -192,8 +228,8 @@ fun ReadingDetailScreen(
                 // Sensor Input Values
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = SurfaceDark),
-                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                    shape = RoundedCornerShape(14.dp),
                     border = BorderStroke(1.dp, SurfaceBorder)
                 ) {
                     Column(
@@ -207,6 +243,8 @@ fun ReadingDetailScreen(
                             color = TextPrimary
                         )
 
+                        HorizontalDivider(color = SurfaceBorder)
+
                         InfoRow("Pressure Reading", "${r.pressure} bar")
                         InfoRow("Refill Operating Mode", if (r.refill == 1) "Active Refill (1)" else "Standard Flow (0)")
                         InfoRow("Nominal Normal Range", "45.0 - 65.0 bar")
@@ -216,8 +254,8 @@ fun ReadingDetailScreen(
                 // GPS & Record Details
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = SurfaceDark),
-                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                    shape = RoundedCornerShape(14.dp),
                     border = BorderStroke(1.dp, SurfaceBorder)
                 ) {
                     Column(
@@ -231,10 +269,12 @@ fun ReadingDetailScreen(
                             color = TextPrimary
                         )
 
+                        HorizontalDivider(color = SurfaceBorder)
+
                         InfoRow("Latitude", "${r.latitude}")
                         InfoRow("Longitude", "${r.longitude}")
-                        InfoRow("Inspection Timestamp", r.readingTimestamp)
-                        InfoRow("Record Created At", r.createdAt)
+                        InfoRow("Inspection Timestamp", r.readingTimestamp.take(19).replace('T', ' '))
+                        InfoRow("Record Created At", r.createdAt.take(19).replace('T', ' '))
                         InfoRow("Database Row ID", "#${r.id}")
                     }
                 }
@@ -243,12 +283,16 @@ fun ReadingDetailScreen(
                 OutlinedButton(
                     onClick = { showDeleteConfirmDialog = true },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, StatusLeakRed)
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(1.dp, StatusLeakRedBorder),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = SurfaceWhite,
+                        contentColor = StatusLeakRed
+                    )
                 ) {
-                    Icon(Icons.Default.Delete, contentDescription = null, tint = StatusLeakRed, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Delete, contentDescription = null, tint = StatusLeakRed, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Delete This Reading", color = StatusLeakRed, fontWeight = FontWeight.SemiBold)
+                    Text("Delete Reading", color = StatusLeakRed, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -256,4 +300,3 @@ fun ReadingDetailScreen(
         }
     }
 }
-

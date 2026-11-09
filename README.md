@@ -1,19 +1,19 @@
 # Water Leakage Detection — Machine Learning System & Android App
 
-A comprehensive Machine Learning college project and native Android application designed to detect pipeline water leakages using physical sensor readings (Pressure and Refill status) evaluated by an ensemble of four scikit-learn classification models.
+A comprehensive Machine Learning system and native Android application designed to detect pipeline water leakages using physical sensor readings (Pressure and Refill status) evaluated by an ensemble of four pre-trained scikit-learn classification models.
 
 ---
 
 ## 1. Project Overview
 
-The **Water Leakage Detection** project bridges industrial predictive maintenance with mobile software engineering. Reusing pre-trained models from an industrial multi-tank network dataset, this solution includes:
-* A **FastAPI Python Backend** serving four trained scikit-learn models through an unweighted probability averaging ensemble.
-* An **SQLite Database** (`water_leakage.db`) persisting physical readings, GPS coordinates, timestamps, individual model predictions, and ensemble probabilities.
-* A native **Android Application** (Kotlin + Jetpack Compose + Material 3) featuring a live Dashboard, Add Reading form, Prediction Results breakdown, Reading History with status filtering, and Reading Details.
-* A **One-Click Startup Script** (`run_backend.bat`) that automatically bridges connections to physical phones over USB and starts the server.
+The **Water Leakage Detection** project bridges industrial predictive maintenance with mobile software engineering. Leveraging pre-trained models from an industrial multi-tank network benchmark, the solution consists of:
+* A **FastAPI Python Backend** serving four trained scikit-learn classification models through an unweighted probability averaging ensemble.
+* An **SQLite Database** (`water_leakage.db`) persisting physical readings, GPS coordinates, timestamps, individual model predictions, and ensemble probabilities across restarts.
+* A native **Android Application** (Kotlin + Jetpack Compose + Material 3) built with a minimal, modern white and sky blue aesthetic, featuring a real-time Dashboard, Add Reading form, Prediction Results breakdown, Reading History with status filtering, and Reading Details.
+* **One-Click Automation Scripts** (`run_backend.bat`, `bridge_usb.bat`) that bridge connections to physical phones over USB and start the server seamlessly.
 
 > [!NOTE]
-> This application is built for simulated inspection and manual entry of pipe readings. It does not connect to real-time physical IoT hardware or telemetry sensors.
+> This application is built for inspection simulations and manual entry of pipe readings. It does not connect to real-time physical IoT hardware or telemetry sensors.
 
 ---
 
@@ -32,7 +32,7 @@ Water distribution networks and industrial storage tanks face continuous risks o
    * **Random Forest**
    * **Support Vector Machine (SVM with RBF Kernel)**
 3. Deploy an ensemble decision mechanism combining individual model posterior probabilities rather than hard class votes.
-4. Deliver a REST API with persistent SQLite database storage.
+4. Deliver an asynchronous REST API with persistent SQLite database storage.
 5. Provide a production-grade Android mobile interface for engineers and evaluators.
 
 ---
@@ -40,11 +40,13 @@ Water distribution networks and industrial storage tanks face continuous risks o
 ## 4. Machine Learning Approach
 
 The models evaluate two physical features to predict pipeline condition:
-1. **Pressure**: Measured fluid pressure. Nominal normal operating levels typically lie in the **45.0 to 65.0** range. Readings below 45 (pressure loss) or above 65 (pressure surge) frequently indicate leaks.
+1. **Pressure**: Measured fluid pressure. Nominal normal operating levels typically lie in the **45.0 to 65.0** bar range. Readings below 45 (pressure loss) or above 65 (pressure surge) frequently indicate leaks.
 2. **Refill**: Binary indicator (`0` or `1`) designating whether an automated pump is refilling the tank.
 
+Metadata such as Pipe ID, GPS coordinates, and inspection timestamps are saved for auditing and record-keeping, but are deliberately **not** fed into the ML models.
+
 ### Feature Normalization
-Input features are scaled using a pre-fitted `StandardScaler`:
+Input features are normalized using a pre-fitted `StandardScaler`:
 $$\mu = [54.2536, 0.06025], \quad \sigma = [14.4685, 0.2379]$$
 
 ---
@@ -74,7 +76,7 @@ $$\mu = [54.2536, 0.06025], \quad \sigma = [14.4685, 0.2379]$$
 
 ## 7. Probability Averaging Formula and Decision Threshold
 
-Rather than majority voting on binary labels, the ensemble calculates the **unweighted arithmetic mean of the predicted leak probabilities**:
+Rather than majority voting on binary class labels, the ensemble calculates the **unweighted arithmetic mean of the predicted leak probabilities**:
 
 $$\text{Average Probability} = \frac{P_{\text{LR}}(\text{Leak}) + P_{\text{DT}}(\text{Leak}) + P_{\text{RF}}(\text{Leak}) + P_{\text{SVM}}(\text{Leak})}{4}$$
 
@@ -94,23 +96,66 @@ $$\text{Average Probability} = \frac{P_{\text{LR}}(\text{Leak}) + P_{\text{DT}}(
 * **Data Validation**: Pydantic v2
 * **Machine Learning**: Scikit-Learn 1.6.1, Joblib, NumPy, Pandas
 
-### Android App
+### Android Application
 * **Language**: Kotlin 2.3+
 * **UI Framework**: Jetpack Compose (Material 3)
+* **Design System**: Minimalist White Primary (`#FFFFFF`) with Sky Blue Accents (`#0284C7`), Slate Typography, and Material Vector Icons
 * **Networking**: Retrofit 2, OkHttp 4, Gson
 * **Architecture**: MVVM (Model-View-ViewModel) with StateFlow
 * **Navigation**: Jetpack Navigation Compose
-* **Hardware APIs**: Android Location Services & Permissions
+* **Location APIs**: Android Location Services & Runtime Permissions
 
 ---
 
-## 9. Complete Project Folder Structure
+## 9. Mobile App UI & Design System
+
+The mobile application has been built from the ground up with a clean, minimal design aesthetic:
+
+* **Primary Background**: Pure White (`#FFFFFF`) and Soft Off-White canvas (`#F8FAFC`).
+* **Accent Colors**: Sky Blue (`#0284C7` / `#0EA5E9` / `#E0F2FE`).
+* **Surfaces**: Crisp white cards with subtle 1.dp borders (`#E2E8F0`).
+* **Typography**: Slate 900 (`#0F172A`) for titles, Slate 600 (`#475569`) for subtitles, and Slate 400 (`#94A3B8`) for metadata labels.
+* **Status Colors**: Rose Red (`#E11D48`) for Leaks, Mint Green (`#059669`) for Normal operation.
+* **Vector Icons**: Exclusively standard Material vector icons (no emojis anywhere in the app).
+
+### Five Complete Screens:
+1. **Dashboard**:
+   - Header with ensemble title and quick action buttons (Refresh, Settings).
+   - Live server status banner displaying active URL, connectivity status dot, and auto-probe action.
+   - Four key metric cards: Total Readings, Leaks Detected, Normal Pipes, and Model Count.
+   - Quick navigation banner to full Reading History.
+   - Recent Predictions card list with tap-to-inspect navigation.
+   - Floating Action Button to log a new reading.
+2. **Add Reading**:
+   - Sensor inputs card: Pipe ID and Pressure (bar) with nominal range hints.
+   - Refill status toggle switch.
+   - Inspection metadata card: Latitude, Longitude, and ISO 8601 Timestamp.
+   - One-tap GPS coordinate acquisition button.
+   - Solid sky blue submit button with loading indicator during inference.
+3. **Prediction Results**:
+   - High-visibility hero status card (Rose Red for Leak, Mint Green for Normal).
+   - Ensemble probability gauge indicating distance from the 50% cutoff line.
+   - Model breakdown card displaying individual probabilities and predictions for all 4 models.
+   - Reading metadata summary card.
+   - Quick action buttons (View History and Add Next).
+4. **Reading History**:
+   - Live search bar filtering by Pipe ID.
+   - Three filter chips (All, Leaks Only, Normal Only).
+   - Interactive history cards with leak badges and average probabilities.
+5. **Reading Details**:
+   - Complete record audit with status badge, probability gauge, 4-model evaluation matrix, sensor inputs, and GPS metadata.
+   - Delete reading button with confirmation dialog.
+
+---
+
+## 10. Complete Project Folder Structure
 
 ```text
 WaterLeakageDetection/
 ├── README.md                           # Comprehensive documentation
 ├── run_backend.bat                     # One-click startup script (starts server & bridges USB)
-├── ml.ipynb                            # Original reference Google Colab notebook
+├── bridge_usb.bat                      # Standalone USB port bridge script
+├── ml.ipynb                            # Reference Google Colab machine learning notebook
 │
 ├── backend/                            # FastAPI Python Backend
 │   ├── app/
@@ -120,7 +165,7 @@ WaterLeakageDetection/
 │   │   ├── models.py                   # Reading SQLAlchemy ORM model
 │   │   ├── schemas.py                  # Pydantic v2 request/response schemas
 │   │   ├── routers/
-│   │   │   ├── dashboard.py            # GET /dashboard/summary
+│   │   │   ├── dashboard.py            # GET /api/v1/dashboard/summary
 │   │   │   └── readings.py             # CRUD & prediction endpoints
 │   │   └── services/
 │   │       └── ml_service.py           # Preprocessing, inference & ensemble logic
@@ -152,25 +197,30 @@ WaterLeakageDetection/
 │   │       │       │   ├── remote/WaterLeakageApi.kt
 │   │       │       │   └── repository/WaterLeakageRepository.kt
 │   │       │       └── ui/
-│   │       │           ├── components/CommonComponents.kt
-│   │       │           ├── components/ServerConfigDialog.kt
-│   │       │           ├── navigation/AppNavHost.kt
-│   │       │           ├── navigation/Screen.kt
+│   │       │           ├── components/
+│   │       │           │   ├── CommonComponents.kt
+│   │       │           │   └── ServerConfigDialog.kt
+│   │       │           ├── navigation/
+│   │       │           │   ├── AppNavHost.kt
+│   │       │           │   └── Screen.kt
 │   │       │           ├── screens/dashboard/
 │   │       │           ├── screens/add/
 │   │       │           ├── screens/result/
 │   │       │           ├── screens/history/
 │   │       │           ├── screens/details/
 │   │       │           └── theme/
+│   │       │               ├── Color.kt
+│   │       │               ├── Theme.kt
+│   │       │               └── Type.kt
 │   │       └── test/kotlin/com/waterleakage/app/DataModelTest.kt
 │   ├── build.gradle.kts
 │   ├── gradle/libs.versions.toml
-    └── settings.gradle.kts
+│   └── settings.gradle.kts
 ```
 
 ---
 
-## 10. Backend Installation Instructions
+## 11. Backend Installation Instructions
 
 A pre-configured virtual environment (`.venv`) is already present in the workspace. If setting up from scratch on another machine:
 
@@ -184,13 +234,14 @@ uv pip install -r backend/requirements.txt
 
 ---
 
-## 11. Backend Startup Commands
+## 12. Backend Startup Commands
 
 ### Method A: One-Click Startup (Recommended)
 Double-click [`run_backend.bat`](file:///d:/College/Sem%203/ML/CIE3%20Project/WaterLeakageDetection/run_backend.bat) in the project folder.  
 It automatically:
 1. Detects connected Android phones and bridges port 8000 over USB (`adb reverse tcp:8000 tcp:8000`).
-2. Starts the Uvicorn server on `http://0.0.0.0:8000`.
+2. Starts a continuous background daemon that auto-bridges the USB connection whenever a phone is reconnected.
+3. Starts the Uvicorn server on `http://0.0.0.0:8000`.
 
 ### Method B: Manual PowerShell Startup
 ```powershell
@@ -199,12 +250,12 @@ $env:PYTHONPATH="."
 .\.venv\Scripts\uvicorn.exe backend.app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-* **API Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
+* **Interactive API Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
 * **Health Check**: [http://localhost:8000/api/v1/health](http://localhost:8000/api/v1/health)
 
 ---
 
-## 12. Android Studio Setup Instructions
+## 13. Android Studio Setup Instructions
 
 1. Open **Android Studio**.
 2. Click **Open** and select `WaterLeakageDetection/android`.
@@ -214,28 +265,29 @@ $env:PYTHONPATH="."
 
 ---
 
-## 13. How to Connect an Android Emulator
+## 14. How to Connect an Android Emulator
 
 1. In Android Studio, launch any Android Virtual Device (AVD).
 2. The Android Emulator maps your computer's `localhost` to `http://10.0.2.2:8000/`.
-3. The Android app defaults to `http://10.0.2.2:8000/`, so emulator connections work out of the box.
+3. The Android app automatically detects when running on an emulator and configures `http://10.0.2.2:8000/` automatically.
 
 ---
 
-## 14. How to Connect a Physical Android Device
+## 15. How to Connect a Physical Android Device
 
-### Option 1: Over USB Cable (Easiest & Most Reliable)
+### Option 1: Over USB Cable (Recommended Zero-Config Mode)
 1. Enable **Developer Options** and **USB Debugging** on your phone:
    * Go to **Settings $\rightarrow$ About Phone $\rightarrow$ tap "Build Number" 7 times**.
    * Go to **Settings $\rightarrow$ Developer Options $\rightarrow$ turn on "USB Debugging"**.
 2. Plug your phone into your PC via USB cable.
-3. Run [`run_backend.bat`](file:///d:/College/Sem%203/ML/CIE3%20Project/WaterLeakageDetection/run_backend.bat) (or run `adb reverse tcp:8000 tcp:8000`).
-4. In the Android app on your phone, tap the **Gear icon (top right)** $\rightarrow$ tap **Localhost** (`http://localhost:8000/`) $\rightarrow$ tap **Test & Save**.
-5. The phone routes all requests directly through the USB cable, completely bypassing router and firewall issues.
+3. Run [`run_backend.bat`](file:///d:/College/Sem%203/ML/CIE3%20Project/WaterLeakageDetection/run_backend.bat) (keeps USB reverse active continuously).
+4. Launch the Android app on your phone:
+   * On physical phones, the app **automatically defaults to `http://127.0.0.1:8000/`** (USB Bridge) and connects immediately on launch.
+   * If disconnected, tap the **"Auto-Connect"** button on the Dashboard, and the app probes all endpoints and reconnects in under 2 seconds.
 
 ---
 
-### Option 2: Over Wi-Fi (Wireless)
+### Option 2: Over Wi-Fi (Wireless Mode)
 1. Connect phone and PC to the **same Wi-Fi network**.
 2. Set your PC's Wi-Fi network to **Private** in Windows:
    * **Settings $\rightarrow$ Network & internet $\rightarrow$ Wi-Fi $\rightarrow$ click your connected network $\rightarrow$ select "Private network"**.
@@ -243,24 +295,24 @@ $env:PYTHONPATH="."
    ```cmd
    netsh advfirewall firewall add rule name="FastAPI 8000" dir=in action=allow protocol=TCP localport=8000
    ```
-4. Find your PC's IP address (`ipconfig` $\rightarrow$ e.g., `192.168.29.251`).
-5. In the app on your phone, tap the **Gear icon** $\rightarrow$ enter `http://192.168.29.251:8000/` $\rightarrow$ tap **Test & Save**.
+4. In the app on your phone, tap the **Gear icon** $\rightarrow$ tap **"Wi-Fi LAN (.29.251)"** (or **"Auto-Detect"**) $\rightarrow$ tap **Test & Save**.
 
 ---
 
-## 15. How to Configure the Backend IP Address in App
+## 16. How to Configure the Backend IP Address in App
 
 Inside the Android app:
 1. On the **Dashboard**, tap the **Settings (gear)** icon in the top-right corner.
-2. Select one of the quick presets or type a custom address:
-   * **Localhost Button**: Sets `http://localhost:8000/` (for USB debugging via `adb reverse`).
-   * **Emulator Button**: Sets `http://10.0.2.2:8000/` (for standard Android emulators).
-   * **Custom Wi-Fi**: Enter `http://<your-pc-ip>:8000/` (e.g. `http://192.168.29.251:8000/`).
-3. Tap **Test & Save**. The app sends a test request to `/api/v1/health` and displays a green confirmation upon success.
+2. Select one of the quick options:
+   * **Auto-Detect Active Server**: Probes USB (`127.0.0.1`), Wi-Fi (`192.168.29.251`), and Emulator (`10.0.2.2`) in parallel, selects the reachable backend, and saves it automatically.
+   * **USB Cable (127.0.0.1)**: 1-tap preset for USB Debugging.
+   * **Wi-Fi LAN (192.168.29.251)**: 1-tap preset for wireless home network.
+   * **Emulator (10.0.2.2)**: 1-tap preset for Android Studio emulators.
+   * **Custom Entry**: Type any IP or port manually.
 
 ---
 
-## 16. API Endpoint Documentation
+## 17. API Endpoint Documentation
 
 All endpoints are served under `/api/v1`.
 
@@ -272,7 +324,7 @@ All endpoints are served under `/api/v1`.
   "version": "1.0.0",
   "models_loaded": true,
   "database_connected": true,
-  "timestamp": "2026-11-05T23:30:00Z"
+  "timestamp": "2026-11-09T23:30:00Z"
 }
 ```
 
@@ -286,7 +338,7 @@ All endpoints are served under `/api/v1`.
   "refill": 0,
   "latitude": 12.9716,
   "longitude": 77.5946,
-  "timestamp": "2026-11-05T22:30:00"
+  "timestamp": "2026-11-09T22:30:00"
 }
 ```
 * **Response**:
@@ -298,7 +350,7 @@ All endpoints are served under `/api/v1`.
   "refill": 0,
   "latitude": 12.9716,
   "longitude": 77.5946,
-  "reading_timestamp": "2026-11-05T22:30:00",
+  "reading_timestamp": "2026-11-09T22:30:00",
   "prob_logistic_regression": 0.8842,
   "prob_decision_tree": 1.0,
   "prob_random_forest": 0.98,
@@ -309,7 +361,7 @@ All endpoints are served under `/api/v1`.
   "pred_svm": "Leak",
   "average_probability": 0.9514,
   "final_prediction": "Leak",
-  "created_at": "2026-11-05T22:30:01"
+  "created_at": "2026-11-09T22:30:01"
 }
 ```
 
@@ -328,7 +380,7 @@ All endpoints are served under `/api/v1`.
 
 ---
 
-## 17. Database Information
+## 18. Database Information
 
 * **Engine**: SQLite
 * **Location**: `backend/water_leakage.db`
@@ -337,7 +389,7 @@ All endpoints are served under `/api/v1`.
 
 ---
 
-## 18. Model Artifact Information
+## 19. Model Artifact Information
 
 Located inside `backend/artifacts/`:
 1. **`scaler.joblib`**: Fitted `StandardScaler` for `[Pressure, Refill]`.
@@ -348,7 +400,30 @@ Located inside `backend/artifacts/`:
 
 ---
 
-## 19. How to Run the Application (Complete Walkthrough)
+## 20. Testing & Verification
+
+### Running Backend Tests
+Execute pytest with the project root in `PYTHONPATH`:
+```powershell
+$env:PYTHONPATH="."
+.\.venv\Scripts\pytest.exe backend\tests\test_backend.py -v
+```
+* **Results**: 8 passed in ~5 seconds (verifies artifact loading, normal prediction, leak prediction, health check, reading creation, dashboard summary, deletion, and SQLite persistence).
+
+### Running Android Tests
+```powershell
+cd android
+.\gradlew.bat testDebugUnitTest
+```
+* **Results**: `BUILD SUCCESSFUL` (verifies data model transformations and business logic).
+
+### Pre-Built Android APK
+The compiled debug APK is located at:
+`android/app/build/outputs/apk/debug/app-debug.apk`
+
+---
+
+## 21. How to Run the Application (Complete Walkthrough)
 
 1. **Connect your phone** via USB cable (USB Debugging on).
 2. **Double-click [`run_backend.bat`](file:///d:/College/Sem%203/ML/CIE3%20Project/WaterLeakageDetection/run_backend.bat)**.
@@ -356,18 +431,18 @@ Located inside `backend/artifacts/`:
    ```powershell
    & "C:\Users\prajw\AppData\Local\Android\Sdk\platform-tools\adb.exe" install -r "android\app\build\outputs\apk\debug\app-debug.apk"
    ```
-4. **Open the app**, tap the **Gear icon** $\rightarrow$ tap **Localhost** $\rightarrow$ tap **Test & Save**.
-5. Tap **"+ New Reading"** and enter:
-   * **Normal Test**: Pressure = `52.5`, Refill = `0` $\rightarrow$ Result: **NO LEAK**
-   * **Leak Test**: Pressure = `28.0`, Refill = `0` $\rightarrow$ Result: **LEAK DETECTED**
+4. **Open the app**; it will auto-detect the backend over the USB port bridge.
+5. Tap **"New Reading"** and test sample values:
+   * **Normal Test**: Pressure = `52.5`, Refill = `0` $\longrightarrow$ Result: **NO LEAK**
+   * **Leak Test**: Pressure = `28.0`, Refill = `0` $\longrightarrow$ Result: **LEAK DETECTED**
 
 ---
 
-## 20. Troubleshooting
+## 22. Troubleshooting
 
 * **Issue: "Unable to connect" over Wi-Fi**
   * *Solution*: Windows Wi-Fi network profile is set to Public by default. Switch Wi-Fi from **Public** to **Private** in Windows Settings and allow port 8000 in Windows Firewall.
-  * *Even Easier*: Use the USB cable and click **Localhost** in the app after running `run_backend.bat`.
+  * *Even Easier*: Use the USB cable and click **USB Cable** in the app after running `run_backend.bat`.
 * **Issue: "No module named uvicorn"**
   * *Solution*: Run `.\.venv\Scripts\uvicorn.exe` or use `run_backend.bat` rather than unattached Python.
 * **Issue: Phone not detected via ADB**
@@ -375,7 +450,7 @@ Located inside `backend/artifacts/`:
 
 ---
 
-## 21. Current Limitations and Future Improvements
+## 23. Current Limitations and Future Improvements
 
 * **Manual Data Entry**: Current release accepts manual operator entries. Future builds can add Bluetooth Low Energy (BLE) or LoRaWAN gateways for automated pipeline telemetry.
 * **Additional Physical Sensors**: Incorporating flow rate (GPM), pipe acoustic frequency analysis, and temperature can improve classification in overlapping pressure zones.

@@ -31,24 +31,39 @@ fun ReadingHistoryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Reading History", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        text = "Reading History",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = TextPrimary
+                        )
                     }
                 },
                 actions = {
                     IconButton(onClick = { viewModel.loadReadings() }) {
-                        Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh")
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Refresh",
+                            tint = TextSecondary
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = BackgroundDark,
+                    containerColor = BackgroundWhite,
                     titleContentColor = TextPrimary
                 )
             )
         },
-        containerColor = BackgroundDark
+        containerColor = BackgroundOffWhite
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -61,17 +76,24 @@ fun ReadingHistoryScreen(
             OutlinedTextField(
                 value = state.searchQuery,
                 onValueChange = { viewModel.onSearchQueryChanged(it) },
-                placeholder = { Text("Search by Pipe ID...") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                placeholder = { Text("Search by Pipe ID...", fontSize = 13.sp) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = TextMuted) },
                 trailingIcon = {
                     if (state.searchQuery.isNotEmpty()) {
                         IconButton(onClick = { viewModel.onSearchQueryChanged("") }) {
-                            Icon(Icons.Default.Clear, contentDescription = "Clear")
+                            Icon(Icons.Default.Clear, contentDescription = "Clear", tint = TextMuted)
                         }
                     }
                 },
                 singleLine = true,
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = SurfaceWhite,
+                    unfocusedContainerColor = SurfaceWhite,
+                    focusedBorderColor = SkyBluePrimary,
+                    unfocusedBorderColor = SurfaceBorder,
+                    cursorColor = SkyBluePrimary
+                ),
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -83,17 +105,25 @@ fun ReadingHistoryScreen(
                 FilterChip(
                     selected = state.filter == HistoryFilter.ALL,
                     onClick = { viewModel.setFilter(HistoryFilter.ALL) },
-                    label = { Text("All Readings") },
+                    label = { Text("All", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
+                    shape = RoundedCornerShape(8.dp),
+                    border = BorderStroke(1.dp, if (state.filter == HistoryFilter.ALL) SkyBluePrimary else SurfaceBorder),
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = PrimaryCyanVariant,
-                        selectedLabelColor = TextPrimary
+                        containerColor = SurfaceWhite,
+                        labelColor = TextSecondary,
+                        selectedContainerColor = SkyBlueLight,
+                        selectedLabelColor = SkyBlueDark
                     )
                 )
                 FilterChip(
                     selected = state.filter == HistoryFilter.LEAKS,
                     onClick = { viewModel.setFilter(HistoryFilter.LEAKS) },
-                    label = { Text("Leaks Only") },
+                    label = { Text("Leaks Only", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
+                    shape = RoundedCornerShape(8.dp),
+                    border = BorderStroke(1.dp, if (state.filter == HistoryFilter.LEAKS) StatusLeakRedBorder else SurfaceBorder),
                     colors = FilterChipDefaults.filterChipColors(
+                        containerColor = SurfaceWhite,
+                        labelColor = TextSecondary,
                         selectedContainerColor = StatusLeakRedContainer,
                         selectedLabelColor = StatusLeakRed
                     )
@@ -101,8 +131,12 @@ fun ReadingHistoryScreen(
                 FilterChip(
                     selected = state.filter == HistoryFilter.NORMAL,
                     onClick = { viewModel.setFilter(HistoryFilter.NORMAL) },
-                    label = { Text("Normal Only") },
+                    label = { Text("Normal Only", fontSize = 12.sp, fontWeight = FontWeight.Medium) },
+                    shape = RoundedCornerShape(8.dp),
+                    border = BorderStroke(1.dp, if (state.filter == HistoryFilter.NORMAL) StatusNormalGreenBorder else SurfaceBorder),
                     colors = FilterChipDefaults.filterChipColors(
+                        containerColor = SurfaceWhite,
+                        labelColor = TextSecondary,
                         selectedContainerColor = StatusNormalGreenContainer,
                         selectedLabelColor = StatusNormalGreen
                     )
@@ -114,7 +148,7 @@ fun ReadingHistoryScreen(
                 Card(
                     colors = CardDefaults.cardColors(containerColor = StatusLeakRedContainer),
                     border = BorderStroke(1.dp, StatusLeakRedBorder),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(10.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
@@ -136,7 +170,7 @@ fun ReadingHistoryScreen(
                         .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = PrimaryCyan)
+                    CircularProgressIndicator(color = SkyBluePrimary)
                 }
             } else if (state.readings.isEmpty()) {
                 Box(
@@ -153,15 +187,16 @@ fun ReadingHistoryScreen(
                             imageVector = Icons.Default.FilterListOff,
                             contentDescription = null,
                             tint = TextMuted,
-                            modifier = Modifier.size(48.dp)
+                            modifier = Modifier.size(40.dp)
                         )
                         Text(
                             text = "No readings found",
                             style = MaterialTheme.typography.titleMedium,
-                            color = TextSecondary
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
                         )
                         Text(
-                            text = "Try clearing your search query or changing the filter chip.",
+                            text = "Try clearing your search query or changing filters.",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextMuted
                         )
@@ -198,8 +233,8 @@ fun HistoryReadingCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = SurfaceDark),
-        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+        shape = RoundedCornerShape(12.dp),
         border = BorderStroke(1.dp, SurfaceBorder)
     ) {
         Column(
@@ -230,7 +265,7 @@ fun HistoryReadingCard(
                     color = TextSecondary
                 )
                 Text(
-                    text = "Avg Prob: ${String.format("%.1f%%", reading.averageProbability * 100)}",
+                    text = "Probability: ${String.format("%.1f%%", reading.averageProbability * 100)}",
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Bold,
                     color = if (reading.averageProbability >= 0.5) StatusLeakRed else StatusNormalGreen
@@ -244,15 +279,16 @@ fun HistoryReadingCard(
                 Text(
                     text = reading.readingTimestamp.take(19).replace('T', ' '),
                     style = MaterialTheme.typography.labelSmall,
-                    color = TextMuted
+                    color = TextMuted,
+                    fontSize = 11.sp
                 )
                 Text(
                     text = "Refill: ${if (reading.refill == 1) "Active" else "None"}",
                     style = MaterialTheme.typography.labelSmall,
-                    color = TextMuted
+                    color = TextMuted,
+                    fontSize = 11.sp
                 )
             }
         }
     }
 }
-
