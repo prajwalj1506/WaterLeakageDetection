@@ -3,6 +3,7 @@ package com.waterleakage.app
 import com.google.gson.Gson
 import com.waterleakage.app.data.model.ReadingRequest
 import com.waterleakage.app.data.model.ReadingResponse
+import com.waterleakage.app.data.remote.ApiClient
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -65,6 +66,25 @@ class DataModelTest {
         val noLeakProb = 0.4999
         assertTrue("Prob >= 0.5 should be Leak", leakProb >= 0.5)
         assertFalse("Prob < 0.5 should be No Leak", noLeakProb >= 0.5)
+    }
+
+    @Test
+    fun apiClient_normalizeUrl_formatsAllVariants() {
+        assertEquals("http://10.17.4.111:8000/", ApiClient.normalizeUrl("10.17.4.111"))
+        assertEquals("http://10.17.4.111:8000/", ApiClient.normalizeUrl("10.17.4.111:8000"))
+        assertEquals("http://10.17.4.111:8000/", ApiClient.normalizeUrl("  http://10.17.4.111  "))
+        assertEquals("https://demo.trycloudflare.com/", ApiClient.normalizeUrl("https://demo.trycloudflare.com"))
+        assertNull(ApiClient.normalizeUrl("   "))
+        assertNull(ApiClient.normalizeUrl("not a valid url :::"))
+    }
+
+    @Test
+    fun apiClient_connectionLabels() {
+        assertEquals("USB Cable", ApiClient.getConnectionLabel("http://127.0.0.1:8000/"))
+        assertEquals("Emulator", ApiClient.getConnectionLabel("http://10.0.2.2:8000/"))
+        assertEquals("PC Hotspot", ApiClient.getConnectionLabel("http://192.168.137.1:8000/"))
+        assertEquals("Wi-Fi / LAN", ApiClient.getConnectionLabel("http://10.17.4.111:8000/"))
+        assertEquals("Remote HTTPS", ApiClient.getConnectionLabel("https://example.trycloudflare.com/"))
     }
 }
 

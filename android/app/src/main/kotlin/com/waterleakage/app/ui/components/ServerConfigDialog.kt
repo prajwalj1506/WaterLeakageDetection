@@ -8,7 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Cable
 import androidx.compose.material.icons.filled.PhoneAndroid
-import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material.icons.filled.WifiTethering
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.waterleakage.app.data.model.ApiResult
 import com.waterleakage.app.data.remote.ApiClient
 import com.waterleakage.app.data.repository.WaterLeakageRepository
 import com.waterleakage.app.ui.theme.*
@@ -51,19 +52,19 @@ fun ServerConfigDialog(
             )
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    text = "Select your connection mode or let the app probe and connect automatically.",
+                    text = "Connect automatically over Wi-Fi, Mobile Hotspot, USB Cable, or Android Emulator.",
                     style = MaterialTheme.typography.bodySmall,
                     color = TextSecondary
                 )
 
-                // Instant Auto-Detect Button
+                // Instant Auto-Detect Button (discovers Wi-Fi LAN, Hotspot, USB & Emulator)
                 Button(
                     onClick = {
                         coroutineScope.launch {
                             isAutoDetecting = true
-                            statusMessage = "Probing USB, Wi-Fi, and Emulator..."
+                            statusMessage = "Scanning Wi-Fi, Hotspot, USB & Emulator..."
                             isSuccess = false
                             val detected = ApiClient.autoDetectWorkingServer(context)
                             isAutoDetecting = false
@@ -74,7 +75,7 @@ fun ServerConfigDialog(
                                 Toast.makeText(context, "Connected to $detected", Toast.LENGTH_SHORT).show()
                                 onSaved()
                             } else {
-                                statusMessage = "Server not reachable. Ensure run_backend.bat is running."
+                                statusMessage = "Server not found automatically. Enter the LAN URL printed by run_backend.bat or switch to Mobile Hotspot if college Wi-Fi isolates devices."
                             }
                         }
                     },
@@ -93,7 +94,7 @@ fun ServerConfigDialog(
                             strokeWidth = 2.dp
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Probing Endpoints...", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        Text("Scanning Network...", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                     } else {
                         Icon(Icons.Default.Bolt, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
@@ -105,7 +106,7 @@ fun ServerConfigDialog(
 
                 // Quick Presets
                 Text(
-                    text = "PRESETS",
+                    text = "QUICK PRESETS",
                     style = MaterialTheme.typography.labelSmall,
                     color = TextMuted,
                     fontWeight = FontWeight.SemiBold,
@@ -117,7 +118,32 @@ fun ServerConfigDialog(
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     OutlinedButton(
-                        onClick = { urlText = ApiClient.USB_BASE_URL },
+                        onClick = {
+                            urlText = ApiClient.HOTSPOT_BASE_URL
+                            statusMessage = null
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, SurfaceBorder),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = if (urlText == ApiClient.HOTSPOT_BASE_URL) SkyBlueLight else SurfaceWhite,
+                            contentColor = if (urlText == ApiClient.HOTSPOT_BASE_URL) SkyBlueDark else TextPrimary
+                        ),
+                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Default.WifiTethering, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text("PC Hotspot", fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                            Text(".137.1", fontSize = 9.sp, color = TextMuted)
+                        }
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            urlText = ApiClient.USB_BASE_URL
+                            statusMessage = null
+                        },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(8.dp),
                         border = BorderStroke(1.dp, SurfaceBorder),
@@ -136,26 +162,10 @@ fun ServerConfigDialog(
                     }
 
                     OutlinedButton(
-                        onClick = { urlText = ApiClient.WIFI_BASE_URL },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(8.dp),
-                        border = BorderStroke(1.dp, SurfaceBorder),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = if (urlText == ApiClient.WIFI_BASE_URL) SkyBlueLight else SurfaceWhite,
-                            contentColor = if (urlText == ApiClient.WIFI_BASE_URL) SkyBlueDark else TextPrimary
-                        ),
-                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(Icons.Default.Wifi, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text("Wi-Fi LAN", fontSize = 11.sp, fontWeight = FontWeight.Medium)
-                            Text(".29.251", fontSize = 9.sp, color = TextMuted)
-                        }
-                    }
-
-                    OutlinedButton(
-                        onClick = { urlText = ApiClient.EMULATOR_BASE_URL },
+                        onClick = {
+                            urlText = ApiClient.EMULATOR_BASE_URL
+                            statusMessage = null
+                        },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(8.dp),
                         border = BorderStroke(1.dp, SurfaceBorder),
@@ -174,15 +184,22 @@ fun ServerConfigDialog(
                     }
                 }
 
-                // Custom URL Input
+                // Custom IP / URL Input
                 OutlinedTextField(
                     value = urlText,
                     onValueChange = {
                         urlText = it
                         statusMessage = null
                     },
-                    label = { Text("Server Base URL") },
-                    placeholder = { Text("http://127.0.0.1:8000/") },
+                    label = { Text("Server IP or Base URL") },
+                    placeholder = { Text("e.g. 10.17.4.111 or http://192.168.1.5:8000/") },
+                    supportingText = {
+                        Text(
+                            text = "Enter the PC IP shown by run_backend.bat (port 8000 is added automatically).",
+                            fontSize = 10.sp,
+                            color = TextMuted
+                        )
+                    },
                     singleLine = true,
                     shape = RoundedCornerShape(10.dp),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -220,18 +237,18 @@ fun ServerConfigDialog(
                         isChecking = true
                         statusMessage = "Testing connection..."
                         isSuccess = false
-                        ApiClient.setBaseUrl(context, urlText)
                         val repo = WaterLeakageRepository(context)
-                        val result = repo.checkHealth()
+                        val result = repo.testAndSaveUrl(urlText)
                         isChecking = false
                         when (result) {
-                            is com.waterleakage.app.data.model.ApiResult.Success -> {
-                                Toast.makeText(context, "Connected successfully", Toast.LENGTH_SHORT).show()
+                            is ApiResult.Success -> {
+                                urlText = result.data
+                                Toast.makeText(context, "Connected to ${result.data}", Toast.LENGTH_SHORT).show()
                                 onSaved()
                                 onDismiss()
                             }
-                            is com.waterleakage.app.data.model.ApiResult.Error -> {
-                                statusMessage = "Connection failed: ${result.message}"
+                            is ApiResult.Error -> {
+                                statusMessage = result.message
                             }
                             else -> {}
                         }

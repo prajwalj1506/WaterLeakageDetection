@@ -168,6 +168,7 @@ WaterLeakageDetection/
 │   │   │   ├── dashboard.py            # GET /api/v1/dashboard/summary
 │   │   │   └── readings.py             # CRUD & prediction endpoints
 │   │   └── services/
+│   │       ├── discovery.py            # UDP broadcast responder & local IPv4 discovery
 │   │       └── ml_service.py           # Preprocessing, inference & ensemble logic
 │   ├── artifacts/                      # Pre-trained ML binaries
 │   │   ├── scaler.joblib               # Fitted StandardScaler
@@ -237,11 +238,11 @@ uv pip install -r backend/requirements.txt
 ## 12. Backend Startup Commands
 
 ### Method A: One-Click Startup (Recommended)
-Double-click [`run_backend.bat`](file:///d:/College/Sem%203/ML/CIE3%20Project/WaterLeakageDetection/run_backend.bat) in the project folder.  
+Double-click [`run_backend.bat`](run_backend.bat) in the project folder.  
 It automatically:
-1. Detects connected Android phones and bridges port 8000 over USB (`adb reverse tcp:8000 tcp:8000`).
-2. Starts a continuous background daemon that auto-bridges the USB connection whenever a phone is reconnected.
-3. Starts the Uvicorn server on `http://0.0.0.0:8000`.
+1. Detects connected Android phones and bridges port 8000 over USB (`adb reverse tcp:8000 tcp:8000`), with a background daemon that re-attaches USB if unplugged/replugged.
+2. Detects and prints all active Wi-Fi / Hotspot LAN URLs for non-USB wireless connections.
+3. Starts the Uvicorn server on `http://0.0.0.0:8000` with UDP LAN discovery (`37020`) enabled.
 
 ### Method B: Manual PowerShell Startup
 ```powershell
@@ -280,22 +281,19 @@ $env:PYTHONPATH="."
    * Go to **Settings $\rightarrow$ About Phone $\rightarrow$ tap "Build Number" 7 times**.
    * Go to **Settings $\rightarrow$ Developer Options $\rightarrow$ turn on "USB Debugging"**.
 2. Plug your phone into your PC via USB cable.
-3. Run [`run_backend.bat`](file:///d:/College/Sem%203/ML/CIE3%20Project/WaterLeakageDetection/run_backend.bat) (keeps USB reverse active continuously).
+3. Run [`run_backend.bat`](run_backend.bat) (keeps USB reverse active continuously).
 4. Launch the Android app on your phone:
    * On physical phones, the app **automatically defaults to `http://127.0.0.1:8000/`** (USB Bridge) and connects immediately on launch.
-   * If disconnected, tap the **"Auto-Connect"** button on the Dashboard, and the app probes all endpoints and reconnects in under 2 seconds.
+   * If disconnected, tap the **"Auto-Connect"** button on the Dashboard, and the app probes all endpoints and reconnects automatically.
 
 ---
 
-### Option 2: Over Wi-Fi (Wireless Mode)
-1. Connect phone and PC to the **same Wi-Fi network**.
-2. Set your PC's Wi-Fi network to **Private** in Windows:
-   * **Settings $\rightarrow$ Network & internet $\rightarrow$ Wi-Fi $\rightarrow$ click your connected network $\rightarrow$ select "Private network"**.
-3. Allow port 8000 in Windows Firewall (run as Administrator in PowerShell):
-   ```cmd
-   netsh advfirewall firewall add rule name="FastAPI 8000" dir=in action=allow protocol=TCP localport=8000
-   ```
-4. In the app on your phone, tap the **Gear icon** $\rightarrow$ tap **"Wi-Fi LAN (.29.251)"** (or **"Auto-Detect"**) $\rightarrow$ tap **Test & Save**.
+### Option 2: Over Wi-Fi or Mobile Hotspot (Wireless Mode, No USB)
+1. Connect both phone and PC to the same Wi-Fi network — **or** use **Windows Mobile Hotspot** / **Phone Hotspot** (recommended on college or public Wi-Fi, because campus networks often block device-to-device traffic via AP Client Isolation).
+2. Run [`run_backend.bat`](run_backend.bat) on your PC; it automatically prints the PC's active Wi-Fi / Hotspot URLs and listens on UDP port `37020` for auto-discovery.
+3. Set your PC's Wi-Fi network profile to **Private** in Windows if prompted, and ensure port `8000` TCP is allowed in Windows Firewall.
+4. Open the app on your phone and tap **"Auto-Connect"** (or open **Settings (gear icon)** $\rightarrow$ **"Auto-Detect Active Server"**). The app automatically discovers your PC via gateway probing, UDP broadcast, and fast `/24` LAN scanning — no manual IP entry required.
+   * For **Windows Mobile Hotspot**, you can also tap the **"PC Hotspot (.137.1)"** preset.
 
 ---
 
@@ -303,12 +301,12 @@ $env:PYTHONPATH="."
 
 Inside the Android app:
 1. On the **Dashboard**, tap the **Settings (gear)** icon in the top-right corner.
-2. Select one of the quick options:
-   * **Auto-Detect Active Server**: Probes USB (`127.0.0.1`), Wi-Fi (`192.168.29.251`), and Emulator (`10.0.2.2`) in parallel, selects the reachable backend, and saves it automatically.
+2. Select one of the options:
+   * **Auto-Detect Active Server**: Runs parallel discovery across USB (`127.0.0.1`), PC Hotspot (`192.168.137.1`), Emulator (`10.0.2.2`), UDP LAN broadcast (`37020`), and `/24` local Wi-Fi/Hotspot subnets, then saves the reachable backend automatically.
+   * **PC Hotspot (192.168.137.1)**: 1-tap preset when your phone is connected to Windows Mobile Hotspot.
    * **USB Cable (127.0.0.1)**: 1-tap preset for USB Debugging.
-   * **Wi-Fi LAN (192.168.29.251)**: 1-tap preset for wireless home network.
    * **Emulator (10.0.2.2)**: 1-tap preset for Android Studio emulators.
-   * **Custom Entry**: Type any IP or port manually.
+   * **Custom Entry**: Type just the PC IP printed by `run_backend.bat` (for example `10.17.4.111`), full `http://` URL, or an `https://` tunnel URL — `http://` and `:8000` are added automatically for bare local IPs.
 
 ---
 
@@ -378,6 +376,19 @@ All endpoints are served under `/api/v1`.
 ### 6. Dashboard Summary
 * **`GET /api/v1/dashboard/summary`**
 
+### 7. Network Discovery Info
+* **`GET /api/v1/network-info`** — Lists active LAN, Hotspot, USB, and Emulator URLs for the backend.
+```json
+{
+  "port": 8000,
+  "usb_url": "http://127.0.0.1:8000/",
+  "emulator_url": "http://10.0.2.2:8000/",
+  "lan_urls": [
+    "http://192.168.137.1:8000/"
+  ]
+}
+```
+
 ---
 
 ## 18. Database Information
@@ -408,31 +419,29 @@ Execute pytest with the project root in `PYTHONPATH`:
 $env:PYTHONPATH="."
 .\.venv\Scripts\pytest.exe backend\tests\test_backend.py -v
 ```
-* **Results**: 8 passed in ~5 seconds (verifies artifact loading, normal prediction, leak prediction, health check, reading creation, dashboard summary, deletion, and SQLite persistence).
+* **Results**: 10 passed in ~7 seconds (verifies artifact loading, normal prediction, leak prediction, health check, reading creation, dashboard summary, deletion, SQLite persistence, network-info endpoint, and UDP discovery responder).
 
-### Running Android Tests
+### Running Android Tests & Build
 ```powershell
 cd android
-.\gradlew.bat testDebugUnitTest
+.\gradlew.bat testDebugUnitTest assembleDebug
 ```
-* **Results**: `BUILD SUCCESSFUL` (verifies data model transformations and business logic).
-
-### Pre-Built Android APK
-The compiled debug APK is located at:
-`android/app/build/outputs/apk/debug/app-debug.apk`
+* **Results**: `BUILD SUCCESSFUL` (verifies `ReadingRequest`/`ReadingResponse` serialization, ensemble 0.5 threshold boundaries, `ApiClient.normalizeUrl`, connection labels, and builds [`app-debug.apk`](android/app/build/outputs/apk/debug/app-debug.apk)).
 
 ---
 
 ## 21. How to Run the Application (Complete Walkthrough)
 
-1. **Connect your phone** via USB cable (USB Debugging on).
-2. **Double-click [`run_backend.bat`](file:///d:/College/Sem%203/ML/CIE3%20Project/WaterLeakageDetection/run_backend.bat)**.
-3. **Install the APK** on your phone (if not already installed):
+1. **Install or Update the APK** on your phone (if not already installed or after rebuilding):
    ```powershell
-   & "C:\Users\prajw\AppData\Local\Android\Sdk\platform-tools\adb.exe" install -r "android\app\build\outputs\apk\debug\app-debug.apk"
+   & "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" install -r "android\app\build\outputs\apk\debug\app-debug.apk"
    ```
-4. **Open the app**; it will auto-detect the backend over the USB port bridge.
-5. Tap **"New Reading"** and test sample values:
+2. **Start the Backend**: Double-click [`run_backend.bat`](run_backend.bat). Note the printed Wi-Fi / Hotspot URLs.
+3. **Connect Your App**:
+   * **Wireless (No USB)**: Put phone & PC on the same Home Wi-Fi, Phone Hotspot, or Windows Mobile Hotspot, open the app, and tap **Auto-Connect** (or **Settings $\rightarrow$ Auto-Detect Active Server** / **PC Hotspot**).
+   * **USB Cable**: Plug in the phone with USB Debugging enabled; `run_backend.bat` keeps `adb reverse tcp:8000 tcp:8000` active automatically.
+   * **Emulator**: Launch any AVD in Android Studio; the app detects `10.0.2.2:8000` automatically.
+4. **Test Predictions**: Tap **"New Reading"** and test sample values:
    * **Normal Test**: Pressure = `52.5`, Refill = `0` $\longrightarrow$ Result: **NO LEAK**
    * **Leak Test**: Pressure = `28.0`, Refill = `0` $\longrightarrow$ Result: **LEAK DETECTED**
 
@@ -440,13 +449,18 @@ The compiled debug APK is located at:
 
 ## 22. Troubleshooting
 
-* **Issue: "Unable to connect" over Wi-Fi**
-  * *Solution*: Windows Wi-Fi network profile is set to Public by default. Switch Wi-Fi from **Public** to **Private** in Windows Settings and allow port 8000 in Windows Firewall.
-  * *Even Easier*: Use the USB cable and click **USB Cable** in the app after running `run_backend.bat`.
+* **Issue: USB works, but Wi-Fi times out or cannot connect**
+  * *Cause 1 (College / Public Wi-Fi Isolation)*: Campus or public routers often block peer-to-peer device traffic (**AP Client Isolation**). **Solution**: Turn on **Mobile Hotspot** on Windows (connect phone $\rightarrow$ tap **PC Hotspot `.137.1`** or **Auto-Connect**) or connect your PC to your **Phone's Hotspot** and tap **Auto-Connect**.
+  * *Cause 2 (Windows Firewall / Public Network)*: Switch your Wi-Fi profile from **Public** to **Private** in Windows Settings, or allow TCP port `8000` (and optional UDP `37020` for instant discovery) in an Administrator PowerShell:
+    ```powershell
+    netsh advfirewall firewall add rule name="FastAPI 8000" dir=in action=allow protocol=TCP localport=8000
+    netsh advfirewall firewall add rule name="WaterLeakage UDP Discovery" dir=in action=allow protocol=UDP localport=37020
+    ```
+  * *Cause 3 (Changing DHCP IP)*: Avoid old IPs; check the live IP printed by [`run_backend.bat`](run_backend.bat) or tap **Auto-Detect Active Server** in the app.
 * **Issue: "No module named uvicorn"**
-  * *Solution*: Run `.\.venv\Scripts\uvicorn.exe` or use `run_backend.bat` rather than unattached Python.
+  * *Solution*: Run `.\.venv\Scripts\uvicorn.exe` or launch [`run_backend.bat`](run_backend.bat) rather than unattached global Python.
 * **Issue: Phone not detected via ADB**
-  * *Solution*: Re-plug the USB cable, tap "Allow USB debugging from this computer" on your phone screen, and verify with `adb devices`.
+  * *Solution*: Re-plug the USB cable, accept the "Allow USB debugging" prompt on your phone screen, and verify with `"%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe" devices`.
 
 ---
 

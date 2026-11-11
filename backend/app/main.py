@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.app.config import PROJECT_NAME, VERSION, API_V1_PREFIX
 from backend.app.database import engine, Base
 from backend.app.schemas import HealthResponse
+from backend.app.services.discovery import discovery_responder, get_local_ipv4_addresses
 from backend.app.services.ml_service import ml_service
 from backend.app.routers import readings, dashboard
 
@@ -17,7 +18,12 @@ async def lifespan(app: FastAPI):
     # Ensure ML models are loaded
     if not ml_service.is_loaded:
         ml_service.load_artifacts()
-    yield
+    # Start UDP LAN discovery responder so Android phones find this PC automatically
+    discovery_responder.start()
+    try:
+        yield
+    finally:
+        discovery_responder.stop()
 
 
 app = FastAPI(
@@ -51,6 +57,18 @@ def health_check():
         database_connected=True,
         timestamp=datetime.now(timezone.utc).isoformat()
     )
+
+
+@app.get(f"{API_V1_PREFIX}/network-info", tags=["Health"])
+def network_info():
+    """List local IPv4 URLs where this backend can be reached over Wi-Fi, Hotspot, or USB."""
+    ips = get_local_ipv4_addresses()
+    return {
+        "port": 8000,
+        "usb_url": "http://127.0.0.1:8000/",
+        "emulator_url": "http://10.0.2.2:8000/",
+        "lan_urls": [f"http://{ip}:8000/" for ip in ips],
+    }
 
 
 @app.get("/", tags=["Root"])

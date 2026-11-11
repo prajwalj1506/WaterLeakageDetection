@@ -1,9 +1,12 @@
 import os
+import json
+import socket
 import pytest
 from fastapi.testclient import TestClient
 
 from backend.app.main import app
 from backend.app.services.ml_service import ml_service
+from backend.app.services.discovery import DiscoveryResponder, DISCOVERY_MAGIC, get_local_ipv4_addresses
 from backend.app.database import SessionLocal, Base, engine
 from backend.app.models import Reading
 
@@ -170,4 +173,36 @@ def test_database_persistence():
     db2.delete(persisted)
     db2.commit()
     db2.close()
+
+
+def test_network_info_endpoint(client):
+    res = client.get("/api/v1/network-info")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["port"] == 8000
+    assert data["usb_url"] == "http://127.0.0.1:8000/"
+    assert data["emulator_url"] == "http://10.0.2.2:8000/"
+    assert isinstance(data["lan_urls"], list)
+    for url in data["lan_urls"]:
+        assert url.startswith("http://") and url.endswith(":8000/")
+
+
+def test_udp_discovery_responder():
+    # Bind on an ephemeral port to avoid interfering with any running server
+    responder = DiscoveryResponder(api_port=8000, discovery_port=37021)
+    responder.start()
+    try:
+        assert isinstance(get_local_ipv4_addresses(), list)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.settimeout(2.0)
+        sock.sendto(DISCOVERY_MAGIC.encode("utf-8"), ("127.0.0.1", 37021))
+        data, _ = sock.recvfrom(2048)
+        sock.close()
+        payload = json.loads(data.decode("utf-8"))
+        assert payload["service"] == "water-leakage-api"
+        assert payload["port"] == 8000
+        assert isinstance(payload["urls"], list)
+    finally:
+        responder.stop()
+
 
